@@ -1,14 +1,18 @@
 import os
 
-from Recording import Recording
+from Recording import Recording, AEPFeedbackRecording
 
 
 class Recordings:
     def __init__(self, directory):
         self.recordings: [Recording] = []
         for path in self._get_all_file_paths(directory):
+            print("Reading recording:", path)
             if path.endswith('.xdf'):
-                self.recordings.append(Recording(path))
+                if 'aep_feedback' in path:
+                    self.recordings.append(AEPFeedbackRecording(path))
+                else:
+                    self.recordings.append(Recording(path))
 
     def filter_by(self, group='*', session='*', subject_id='*', experiment_id='*'):
         filtered_recordings = []
