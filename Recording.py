@@ -1,4 +1,6 @@
 import os
+import mne
+import numpy as np
 import pyxdf
 
 
@@ -85,9 +87,20 @@ class Recording:
 class AEPFeedbackRecording(Recording):
     def __init__(self, xdf_path):
         super().__init__(xdf_path)
+        self._create_mne_raw_data(max_frequency=60)
         self._read_feedback_data()
 
+    def _create_mne_raw_data(self, max_frequency):
+        info = mne.create_info(ch_names=['Fz', 'C3', 'Cz', 'C4', 'Pz', 'PO7', 'Oz', 'PO8'], ch_types=['eeg'] * 8,
+                               sfreq=250)
+        raw = mne.io.RawArray([1e-6 * self.eeg_data[:, i] for i in range(8)], info)
+        raw.notch_filter(freqs=[47, 50, 53])
+        raw.filter(0.1, max_frequency)
+        self._raw = raw
+
     def _read_feedback_data(self):
+        self.mne_events = []
+        self.trials = []
         # Count the number of trials
         for i, event in enumerate(self.marker_data):
             if event == 'trial-begin':
@@ -123,9 +136,29 @@ class AEPFeedbackRecording(Recording):
                     response = 'incorrect'
                 reaction_time = int(self.marker_data[trial_end_index - 1].split('-')[1][:-2])
             begin_time = self.marker_time[i]
-            end_time = self.marker_time[trial_end_index]
             stimulus_time = self.marker_time[i + 1]
-            response_time = None if 'was-missed' in self.marker_data[i + 2] else self.marker_time[
-                i + 2]
-            # print(begin_time, stimulus_time, response_time, end_time)
-            # print(stimulus, response, reaction_time)
+            response_time = None if 'was-missed' in self.marker_data[i + 2] else self.marker_time[i + 2]
+            end_time = self.marker_time[trial_end_index]
+
+            eeg_start_index = np.argmax(self.eeg_time >= begin_time)
+            eeg_stimulus_index = np.argmax(self.eeg_time >= stimulus_time)
+            eeg_response_index = np.argmax(self.eeg_time >= response_time) if response_time is not None else None
+            eeg_end_index = np.argmax(self.eeg_time >= end_time)
+
+            try:
+                assert eeg_stimulus_index < eeg_end_index, f"Stimulus index is greater than end index. {i}"
+                if response_time is not None:
+                    self.mne_events.append([eeg_response_index, 1, 2 if response == 'correct' else 3])
+                self.mne_events.append([eeg_stimulus_index, 0, 1 if stimulus == 'oddball' else 0])
+                self.trials.append({
+                    'time': self.eeg_time[eeg_start_index:eeg_end_index],
+                    'data': self.eeg_data[eeg_start_index:eeg_end_index],
+                    'stimulus': (eeg_stimulus_index, stimulus),
+                    'reaction_time': reaction_time,
+                    'response': (eeg_response_index, response)
+                })
+            except AssertionError as e:
+                print(f"WARNING, data validation failed. Skipping trial...", e)
+        self.mne_events = np.array(self.mne_events)
+        event_dict = {'oddball': 1, 'standard': 0}
+        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8, preload=True)
