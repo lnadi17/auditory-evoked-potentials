@@ -163,11 +163,32 @@ class AEPFeedbackRecording(Recording):
             self.trials.append({
                 'time': self.eeg_time[eeg_start_index:eeg_end_index],
                 'data': self.eeg_data[eeg_start_index:eeg_end_index],
-                'stimulus': (eeg_stimulus_index, stimulus),  # TODO: Subtract eeg_start_index
+                'stimulus': (eeg_stimulus_index - eeg_start_index, stimulus),
                 'reaction_time': reaction_time,
-                'response': (eeg_response_index, response)  # TODO: Subtract eeg_start_index
+                'response': (eeg_response_index - eeg_start_index, response) if response_time is not None else (
+                    None, None)
             })
         self.mne_events = np.array(self.mne_events)
         event_dict = {'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4}
         self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8, preload=True,
                                   on_missing='ignore')
+
+    def plot_epochs(self):
+        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4})
+
+    def plot_condition(self, condition="standard"):
+        self._epochs[condition].average().plot()
+
+    def compare_conditions(self, axes=None, save=False, name=None):
+        evokeds = dict(
+            standard=list(self._epochs["standard"].iter_evoked()),
+            oddball=list(self._epochs["oddball"].iter_evoked()),
+        )
+        if axes is not None:
+            mne.viz.plot_compare_evokeds(evokeds, combine="mean", axes=axes)
+        else:
+            fig = mne.viz.plot_compare_evokeds(evokeds, combine="mean")[0]
+            if save:
+                if name is None:
+                    name = f"{self.recording_name}_compare_conditions.png"
+                fig.savefig(f'./images/{name}')
