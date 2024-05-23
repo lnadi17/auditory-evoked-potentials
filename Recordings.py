@@ -12,6 +12,7 @@ class Recordings:
                 if 'aep_feedback' in path:
                     self.recordings.append(AEPFeedbackRecording(path))
                 else:
+                    # TODO: Create a derived class for AEP recording
                     self.recordings.append(Recording(path))
 
     def filter_by(self, group='*', session='*', subject_id='*', experiment_id='*'):

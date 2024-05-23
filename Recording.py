@@ -97,6 +97,7 @@ class AEPFeedbackRecording(Recording):
         raw.notch_filter(freqs=[47, 50, 53])
         raw.filter(0.1, max_frequency)
         self._raw = raw
+        self.eeg_data = np.transpose(raw.get_data())
 
     def _read_feedback_data(self):
         self.mne_events = []
@@ -147,18 +148,26 @@ class AEPFeedbackRecording(Recording):
 
             try:
                 assert eeg_stimulus_index < eeg_end_index, f"Stimulus index is greater than end index. {i}"
+                # Avoid overlapping events
+                if self.mne_events and eeg_stimulus_index == self.mne_events[-1][0]:
+                    eeg_stimulus_index += 1
+                self.mne_events.append([eeg_stimulus_index, 0, 2 if stimulus == 'oddball' else 1])
                 if response_time is not None:
-                    self.mne_events.append([eeg_response_index, 1, 2 if response == 'correct' else 3])
-                self.mne_events.append([eeg_stimulus_index, 0, 1 if stimulus == 'oddball' else 0])
-                self.trials.append({
-                    'time': self.eeg_time[eeg_start_index:eeg_end_index],
-                    'data': self.eeg_data[eeg_start_index:eeg_end_index],
-                    'stimulus': (eeg_stimulus_index, stimulus),
-                    'reaction_time': reaction_time,
-                    'response': (eeg_response_index, response)
-                })
+                    # Avoid overlapping events
+                    if eeg_response_index == self.mne_events[-1][0]:
+                        eeg_response_index += 1
+                    self.mne_events.append([eeg_response_index, 0, 3 if response == 'correct' else 4])
             except AssertionError as e:
                 print(f"WARNING, data validation failed. Skipping trial...", e)
+
+            self.trials.append({
+                'time': self.eeg_time[eeg_start_index:eeg_end_index],
+                'data': self.eeg_data[eeg_start_index:eeg_end_index],
+                'stimulus': (eeg_stimulus_index, stimulus),  # TODO: Subtract eeg_start_index
+                'reaction_time': reaction_time,
+                'response': (eeg_response_index, response)  # TODO: Subtract eeg_start_index
+            })
         self.mne_events = np.array(self.mne_events)
-        event_dict = {'oddball': 1, 'standard': 0}
-        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8, preload=True)
+        event_dict = {'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4}
+        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8, preload=True,
+                                  on_missing='ignore')
