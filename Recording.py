@@ -84,6 +84,94 @@ class Recording:
         print("---")
 
 
+class AEPRecording(Recording):
+    def __init__(self, xdf_path):
+        super().__init__(xdf_path)
+        self._create_mne_raw_data(max_frequency=60)
+        self._read_aep_data()
+
+    def _create_mne_raw_data(self, max_frequency):
+        info = mne.create_info(ch_names=['Fz', 'C3', 'Cz', 'C4', 'Pz', 'PO7', 'Oz', 'PO8'], ch_types=['eeg'] * 8,
+                               sfreq=250)
+        raw = mne.io.RawArray([1e-6 * self.eeg_data[:, i] for i in range(8)], info)
+        raw.notch_filter(freqs=[47, 50, 53])
+        raw.filter(0.1, max_frequency)
+        self._raw = raw
+        self.eeg_data = np.transpose(raw.get_data())
+
+    def _read_aep_data(self):
+        self.mne_events = []
+        self.trials = []
+        # Parse events in the marker data
+        for i, event in enumerate(self.marker_data):
+            if event == 'trial-begin':
+                try:
+                    assert self.marker_data[i + 1] in ['standard', 'oddball'], i
+                    # Search for 'trial-end', watch out for errors
+                    trial_end_index = None
+                    for j, event2 in enumerate(self.marker_data[i + 1:]):
+                        if 'error' in event2:
+                            break
+                        if event2 == 'trial-end':
+                            trial_end_index = i + 1 + j
+                            break
+                    assert trial_end_index is not None
+                except AssertionError as e:
+                    print(f"WARNING, data validation failed. Skipping trial...", e)
+                    continue
+            else:
+                continue
+            stimulus = self.marker_data[i + 1]
+            begin_time = self.marker_time[i]
+            end_time = self.marker_time[trial_end_index]
+            stimulus_time = self.marker_time[i + 1]
+
+            eeg_start_index = np.argmax(self.eeg_time >= begin_time)
+            eeg_stimulus_index = np.argmax(self.eeg_time >= stimulus_time)
+            eeg_end_index = np.argmax(self.eeg_time >= end_time)
+
+            try:
+                assert eeg_stimulus_index < eeg_end_index, f"Stimulus index is greater than end index. {i}"
+                # Avoid overlapping events
+                if self.mne_events and eeg_stimulus_index == self.mne_events[-1][0]:
+                    eeg_stimulus_index += 1
+                self.mne_events.append([eeg_stimulus_index, 0, 2 if stimulus == 'oddball' else 1])
+            except AssertionError as e:
+                print(f"WARNING, data validation failed. Skipping trial...", e)
+
+            self.trials.append({
+                'time': self.eeg_time[eeg_start_index:eeg_end_index],
+                'data': self.eeg_data[eeg_start_index:eeg_end_index],
+                'stimulus': (eeg_stimulus_index - eeg_start_index, stimulus),
+            })
+
+        self.mne_events = np.array(self.mne_events)
+        event_dict = {'standard': 1, 'oddball': 2}
+        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8,
+                                  preload=True)
+        # on_missing='ignore')
+
+    def plot_epochs(self):
+        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2})
+
+    def plot_condition(self, condition="standard"):
+        self._epochs[condition].average().plot()
+
+    def compare_conditions(self, axes=None, save=False, name=None):
+        evokeds = dict(
+            standard=list(self._epochs["standard"].iter_evoked()),
+            oddball=list(self._epochs["oddball"].iter_evoked()),
+        )
+        if axes is not None:
+            mne.viz.plot_compare_evokeds(evokeds, combine="mean", axes=axes)
+        else:
+            fig = mne.viz.plot_compare_evokeds(evokeds, combine="mean")[0]
+            if save:
+                if name is None:
+                    name = f"{self.recording_name}_compare_conditions.png"
+                fig.savefig(f'./images/{name}')
+
+
 class AEPFeedbackRecording(Recording):
     def __init__(self, xdf_path):
         super().__init__(xdf_path)
