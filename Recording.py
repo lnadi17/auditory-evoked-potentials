@@ -35,12 +35,21 @@ class Recording:
     def _read_metadata(self):
         # Read info of the first stream
         info = self._xdf_data[0]['info']
+        id = int(info['desc'][0]['subject'][0]['id'][0])
+        group = int(info['desc'][0]['subject'][0]['group'][0])
+        try:
+            session = int(info['desc'][0]['subject'][0]['session'][0])
+        except ValueError:
+            # There is a typo in the metadata of the recordings (1o instead of 10)
+            if info['desc'][0]['subject'][0]['session'][0] == '1o':
+                session = 10
+
         self.metadata = {
             "effective_sample_rate": info['effective_srate'],
             "subject": {
-                "id": int(info['desc'][0]['subject'][0]['id'][0]),
-                "group": int(info['desc'][0]['subject'][0]['group'][0]),
-                "session": int(info['desc'][0]['subject'][0]['session'][0])
+                "id": id,
+                "group": group,
+                "session": session
             },
         }
 
@@ -70,7 +79,14 @@ class Recording:
         self.group = int(split_slash[2])
         self.session = int(split_slash[4])
         self.subject_id = int(split_slash[3])
-        self.experiment_id = 'aep_feedback' if 'aep_feedback' in filename else 'aep'
+        if 'aep_feedback' in filename:
+            self.experiment_id = 'aep_feedback'
+        elif 'resting_open' in filename:
+            self.experiment_id = 'resting_open'
+        elif 'resting_closed' in filename:
+            self.experiment_id = 'resting_closed'
+        else:
+            self.experiment_id = 'aep'
 
     def print_info(self):
         print("---")
