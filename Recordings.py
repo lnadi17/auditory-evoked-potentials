@@ -4,15 +4,19 @@ from Recording import Recording, AEPFeedbackRecording, AEPRecording
 
 
 class Recordings:
-    def __init__(self, directory):
+    def __init__(self, directory=None, recordings=None, tmin=-0.2, tmax=0.8, baseline=None):
+        if recordings is not None:
+            self.recordings = recordings
+            return
+
         self.recordings: [Recording] = []
         for path in self._get_all_file_paths(directory):
             print("Reading recording:", path)
             if path.endswith('.xdf'):
                 if 'aep_feedback' in path:
-                    self.recordings.append(AEPFeedbackRecording(path))
+                    self.recordings.append(AEPFeedbackRecording(path, tmin, tmax, baseline))
                 else:
-                    self.recordings.append(AEPRecording(path))
+                    self.recordings.append(AEPRecording(path, tmin, tmax, baseline))
 
     def filter_by(self, group='*', session='*', subject_id='*', experiment_id='*'):
         filtered_recordings = []
@@ -26,7 +30,7 @@ class Recordings:
             if experiment_id != '*' and recording.experiment_id != experiment_id:
                 continue
             filtered_recordings.append(recording)
-        return filtered_recordings
+        return Recordings(directory=None, recordings=filtered_recordings)
 
     @staticmethod
     def _get_all_file_paths(directory, contains_str=None):

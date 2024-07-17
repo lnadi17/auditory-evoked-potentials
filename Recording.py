@@ -85,10 +85,10 @@ class Recording:
 
 
 class AEPRecording(Recording):
-    def __init__(self, xdf_path):
+    def __init__(self, xdf_path, tmin, tmax, baseline):
         super().__init__(xdf_path)
         self._create_mne_raw_data(max_frequency=60)
-        self._read_aep_data()
+        self._read_aep_data(tmin, tmax, baseline)
 
     def _create_mne_raw_data(self, max_frequency):
         info = mne.create_info(ch_names=['Fz', 'C3', 'Cz', 'C4', 'Pz', 'PO7', 'Oz', 'PO8'], ch_types=['eeg'] * 8,
@@ -99,7 +99,7 @@ class AEPRecording(Recording):
         self._raw = raw
         self.eeg_data = np.transpose(raw.get_data())
 
-    def _read_aep_data(self):
+    def _read_aep_data(self, tmin, tmax, baseline):
         self.mne_events = []
         self.trials = []
         # Parse events in the marker data
@@ -147,9 +147,8 @@ class AEPRecording(Recording):
 
         self.mne_events = np.array(self.mne_events)
         event_dict = {'standard': 1, 'oddball': 2}
-        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8,
-                                  preload=True)
-        # on_missing='ignore')
+        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=tmin, tmax=tmax, preload=True,
+                                  baseline=baseline)
 
     def plot_epochs(self):
         self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2})
@@ -157,26 +156,26 @@ class AEPRecording(Recording):
     def plot_condition(self, condition="standard"):
         self._epochs[condition].average().plot()
 
-    def compare_conditions(self, axes=None, save=False, name=None):
+    def compare_conditions(self, combine="mean", axes=None, save=False, save_name=None):
         evokeds = dict(
             standard=list(self._epochs["standard"].iter_evoked()),
             oddball=list(self._epochs["oddball"].iter_evoked()),
         )
         if axes is not None:
-            mne.viz.plot_compare_evokeds(evokeds, combine="mean", axes=axes)
+            mne.viz.plot_compare_evokeds(evokeds, combine=combine, axes=axes)
         else:
-            fig = mne.viz.plot_compare_evokeds(evokeds, combine="mean")[0]
+            fig = mne.viz.plot_compare_evokeds(evokeds, combine=combine)[0]
             if save:
-                if name is None:
-                    name = f"{self.recording_name}_compare_conditions.png"
-                fig.savefig(f'./images/{name}')
+                if save_name is None:
+                    save_name = f"{self.recording_name}_compare_conditions.png"
+                fig.savefig(f'./images/{save_name}')
 
 
 class AEPFeedbackRecording(Recording):
-    def __init__(self, xdf_path):
+    def __init__(self, xdf_path, tmin, tmax, baseline):
         super().__init__(xdf_path)
         self._create_mne_raw_data(max_frequency=60)
-        self._read_feedback_data()
+        self._read_feedback_data(tmin, tmax, baseline)
 
     def _create_mne_raw_data(self, max_frequency):
         info = mne.create_info(ch_names=['Fz', 'C3', 'Cz', 'C4', 'Pz', 'PO7', 'Oz', 'PO8'], ch_types=['eeg'] * 8,
@@ -187,7 +186,7 @@ class AEPFeedbackRecording(Recording):
         self._raw = raw
         self.eeg_data = np.transpose(raw.get_data())
 
-    def _read_feedback_data(self):
+    def _read_feedback_data(self, tmin, tmax, baseline):
         self.mne_events = []
         self.trials = []
         # Count the number of trials
@@ -258,8 +257,8 @@ class AEPFeedbackRecording(Recording):
             })
         self.mne_events = np.array(self.mne_events)
         event_dict = {'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4}
-        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=-0.2, tmax=0.8, preload=True,
-                                  on_missing='ignore')
+        self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=tmin, tmax=tmax, preload=True,
+                                  on_missing='ignore', baseline=baseline)
 
     def plot_epochs(self):
         self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4})
@@ -267,16 +266,16 @@ class AEPFeedbackRecording(Recording):
     def plot_condition(self, condition="standard"):
         self._epochs[condition].average().plot()
 
-    def compare_conditions(self, axes=None, save=False, name=None):
+    def compare_conditions(self, combine="mean", axes=None, save=False, save_name=None):
         evokeds = dict(
             standard=list(self._epochs["standard"].iter_evoked()),
             oddball=list(self._epochs["oddball"].iter_evoked()),
         )
         if axes is not None:
-            mne.viz.plot_compare_evokeds(evokeds, combine="mean", axes=axes)
+            mne.viz.plot_compare_evokeds(evokeds, combine=combine, axes=axes)
         else:
-            fig = mne.viz.plot_compare_evokeds(evokeds, combine="mean")[0]
+            fig = mne.viz.plot_compare_evokeds(evokeds, combine=combine)[0]
             if save:
-                if name is None:
-                    name = f"{self.recording_name}_compare_conditions.png"
-                fig.savefig(f'./images/{name}')
+                if save_name is None:
+                    save_name = f"{self.recording_name}_compare_conditions.png"
+                fig.savefig(f'./images/{save_name}')
