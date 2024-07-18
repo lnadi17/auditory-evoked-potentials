@@ -103,15 +103,15 @@ class Recording:
 class AEPRecording(Recording):
     def __init__(self, xdf_path, tmin, tmax, baseline):
         super().__init__(xdf_path)
-        self._create_mne_raw_data(max_frequency=60)
+        self._create_mne_raw_data()
         self._read_aep_data(tmin, tmax, baseline)
 
-    def _create_mne_raw_data(self, max_frequency):
+    def _create_mne_raw_data(self):
         info = mne.create_info(ch_names=['Fz', 'C3', 'Cz', 'C4', 'Pz', 'PO7', 'Oz', 'PO8'], ch_types=['eeg'] * 8,
                                sfreq=250)
         raw = mne.io.RawArray([1e-6 * self.eeg_data[:, i] for i in range(8)], info)
         raw.notch_filter(freqs=[47, 50, 53])
-        raw.filter(0.1, max_frequency)
+        raw.filter(0.5, 60)
         self._raw = raw
         self.eeg_data = np.transpose(raw.get_data())
 
@@ -166,8 +166,8 @@ class AEPRecording(Recording):
         self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=tmin, tmax=tmax, preload=True,
                                   baseline=baseline)
 
-    def plot_epochs(self):
-        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2})
+    def plot_epochs(self, scale_mV='auto'):
+        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2}, scalings=dict(eeg=scale_mV))
 
     def plot_condition(self, condition="standard"):
         self._epochs[condition].average().plot()
@@ -190,15 +190,15 @@ class AEPRecording(Recording):
 class AEPFeedbackRecording(Recording):
     def __init__(self, xdf_path, tmin, tmax, baseline):
         super().__init__(xdf_path)
-        self._create_mne_raw_data(max_frequency=60)
+        self._create_mne_raw_data()
         self._read_feedback_data(tmin, tmax, baseline)
 
-    def _create_mne_raw_data(self, max_frequency):
+    def _create_mne_raw_data(self):
         info = mne.create_info(ch_names=['Fz', 'C3', 'Cz', 'C4', 'Pz', 'PO7', 'Oz', 'PO8'], ch_types=['eeg'] * 8,
                                sfreq=250)
         raw = mne.io.RawArray([1e-6 * self.eeg_data[:, i] for i in range(8)], info)
         raw.notch_filter(freqs=[47, 50, 53])
-        raw.filter(0.1, max_frequency)
+        raw.filter(0.5, 60)
         self._raw = raw
         self.eeg_data = np.transpose(raw.get_data())
 
@@ -276,8 +276,9 @@ class AEPFeedbackRecording(Recording):
         self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=tmin, tmax=tmax, preload=True,
                                   on_missing='ignore', baseline=baseline)
 
-    def plot_epochs(self):
-        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4})
+    def plot_epochs(self, scale_mV='auto'):
+        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4},
+                          scalings=dict(eeg=scale_mV))
 
     def plot_condition(self, condition="standard"):
         self._epochs[condition].average().plot()

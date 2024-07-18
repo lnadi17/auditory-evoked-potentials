@@ -1,5 +1,6 @@
-from Recordings import Recordings
+from Recordings import Recordings, AEPFeedbackRecordings, AEPRecordings
 import matplotlib
+import matplotlib.pyplot as plt
 
 matplotlib.use('TkAgg')
 import mne
@@ -41,17 +42,4 @@ def plot_subjects(recordings):
 if __name__ == '__main__':
     basepath = './Recordings'
     recordings = Recordings(basepath)
-    # Get feedback recordings
-    aep_feedback_recordings = recordings.filter_by(experiment_id='aep_feedback')
-    aep_recordings = recordings.filter_by(experiment_id='aep')
-    # sample = aep_feedback_recordings[0]
-    # sample.plot_epochs()
-    # plt.show()
-    # sample.plot_condition('standard')
-    # sample.plot_condition('oddball')
-    # plt.show()
-    # for i, recording in enumerate(feedback_recordings):
-    #     id = recording.subject_id
-    #     recording.compare_conditions(save=True, name=f'feedback_{id}')
-
-    plot_subjects(aep_recordings)
+    # aep_recordings = AEPRecordings(directory=None, recordings=recordings.filter_by(experiment_id='aep').recordings)

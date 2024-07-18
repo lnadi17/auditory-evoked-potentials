@@ -45,3 +45,17 @@ class Recordings:
     def print_info(self, group='*', session='*', subject_id='*', experiment_id='*'):
         for recording in self.filter_by(group, session, subject_id, experiment_id).recordings:
             recording.print_info()
+
+
+class AEPFeedbackRecordings(Recordings):
+    def __init__(self, directory=None, recordings=None, tmin=-0.2, tmax=1, baseline=None):
+        super().__init__(directory, recordings)
+        if recordings is not None:
+            self.recordings = [AEPFeedbackRecording(r.xdf_path, tmin, tmax, baseline) for r in self.recordings]
+
+
+class AEPRecordings(Recordings):
+    def __init__(self, directory=None, recordings=None, tmin=-0.2, tmax=1, baseline=None):
+        super().__init__(directory, recordings)
+        if recordings is not None:
+            self.recordings = [AEPRecording(r.xdf_path, tmin, tmax, baseline) for r in self.recordings]
