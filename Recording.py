@@ -167,7 +167,8 @@ class AEPRecording(Recording):
                                   baseline=baseline)
 
     def plot_epochs(self, scale_mV='auto'):
-        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2}, scalings=dict(eeg=scale_mV))
+        self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2}, scalings=dict(eeg=scale_mV),
+                          block=True)
 
     def plot_condition(self, condition="standard"):
         self._epochs[condition].average().plot()
@@ -272,13 +273,14 @@ class AEPFeedbackRecording(Recording):
                     None, None)
             })
         self.mne_events = np.array(self.mne_events)
-        event_dict = {'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4}
+        # Events that don’t match the events of interest as specified by event_id will be dropped
+        event_dict = {'standard': 1, 'oddball': 2}
         self._epochs = mne.Epochs(self._raw, self.mne_events, event_id=event_dict, tmin=tmin, tmax=tmax, preload=True,
                                   on_missing='ignore', baseline=baseline)
 
     def plot_epochs(self, scale_mV='auto'):
         self._epochs.plot(events=self.mne_events, event_id={'standard': 1, 'oddball': 2, 'correct': 3, 'incorrect': 4},
-                          scalings=dict(eeg=scale_mV))
+                          scalings=dict(eeg=scale_mV), block=True)
 
     def plot_condition(self, condition="standard"):
         self._epochs[condition].average().plot()
