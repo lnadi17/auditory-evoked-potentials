@@ -76,7 +76,7 @@ Recording files inside these folders are named as such: `{Subject ID}_{Experimen
   
 Subjects are numbered from 1 through 10 and possible experiment types are aep/aep-feedback/resting-open/resting-closed. Session IDs are either 1 or 2 for "aep/aep-feedback" experiments, while all resting state experiments have a single session.  
   
-Some recordings will have an additional '\_UNFINISHED' suffix at the end, which means that the recording was interrupted during that session (for example, due to the EEG device battery getting too low). All '\_UNFINISHED' recordings were re-run from start to finish, which means there are at least two full sessions for 'aep/aep-feedback' experiments. However, epochs from unfinished recordings do not have any defects and can be freely used in the subsequent steps of processing.
+**Note:** Some recordings will have an additional '\_UNFINISHED' suffix at the end, which means that the recording was interrupted during that session (for example, due to the EEG device battery getting too low). All '\_UNFINISHED' recordings were re-run from start to finish, which means there are at least two full sessions for 'aep/aep-feedback' experiments. However, epochs from unfinished recordings do not have any defects and can be freely used in the subsequent steps of processing.
 
 ## Filtered Data  
   
