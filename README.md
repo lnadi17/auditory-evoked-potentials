@@ -2,7 +2,7 @@
 
 Check out the [project report](./Report.pdf) in Georgian language.
 
-## Data Description
+# Data Description
 
 ## Introduction
 
@@ -51,3 +51,7 @@ Each epoch is stored in a separate CSV file while the multiple sessions are merg
 The selected epochs are stored in the "Selected_Epochs" folder. The selected epochs are the epochs that were manually selected with the least noise. The selection process was done by visually inspecting the epochs and selecting the ones that were free of artifacts. The naming convention for the files is as follows: `{Subject ID}_{Experiment Type}_{Epoch ID}_{Stimulus Type}.csv`.  
   
 The selected epochs in the "AEP" and "AEP_Feedback" experiments are baseline corrected using the 0.2s pre-stimulus period. The baseline correction is done by subtracting the mean of the pre-stimulus period from the entire epoch for each EEG channel. The epochs in the "Resting_Open" and "Resting_Closed" experiments are the same as in the "Epoched_Data" folder.
+
+## Limitations
+
+Data was recorded using the dry electrodes of the Unicorn Hybrid Black device. Although dry electrodes typically have a lower signal-to-noise ratio compared to wet electrodes, this choice was made for the sake of practicality of the method. Additionally, the number of electrodes, subjects, and trials may pose limitations depending on the specific focus of the research.
