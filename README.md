@@ -45,7 +45,7 @@ More information about channels can be found in [Unicorn Hybrid Black User Manua
 
 ## Event Descriptions
 
-There are multiple event markers that accompany the data in the "Event" column. Each event represents a point in time where something notable has happened, for example when a stimulus was presented, or keyboard response was received. Event markers may also contain metadata such as the system status or any errors that happened during the recording. Key event markers for each experiment are as follows:
+There are multiple event markers that accompany the data in the "Event" column. Each event represents a point in time where something notable has happened, for example when a stimulus was presented, or a keyboard response was received. Event markers may also contain metadata such as the system status or any errors that happened during the recording. Key event markers for each experiment are as follows:
 
 AEP:
  - *trial-begin*
