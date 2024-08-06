@@ -24,7 +24,51 @@ In experiment 2, subjects again listened to 200 auditory stimuli with the same f
 
 Resting-state experiments were conducted in two conditions, eyes open and eyes closed. Both of these conditions were recorded for 2 minutes. Subjects were instructed to remain as still as possible, maintain a relaxed state during the recordings, and avoid any specific thoughts or mental tasks during this period.
 
-### Raw Data 
+## File Structure
+
+Each CSV file recording has 19 columns. Each column corresponds to an output channel acquired from the Unicorn Hybrid Black EEG device. There are different types of channels in the raw recording files: 1 time channel, 8 EEG channels, 3 accelerometer channels, 3 gyroscope channels, 1 counter channel, 1 validation channel, and 1 event channel.   
+  
+Specifically, all the 19 channels are: Time, EEG_Fz, EEG_C3, EEG_Cz, EEG_C4, EEG_Pz, EEG_PO7, EEG_Oz, EEG_PO8, Accelerometer_X, Accelerometer_Y, Accelerometer_Z, Gyroscope_X, Gyroscope_Y, Gyroscope_Z, Battery_Level, Counter, Validation, Event.  
+  
+1. *Time* column indicates a number of seconds passed since the start of the session.  
+2. *EEG_\** columns indicate unfiltered voltage values (in microvolts) for 8 EEG channels specified in the Unicord Hybrid Black EEG device manual. For each EEG channel an electrode position is indicated (e.g. Cz) according to the international 10-20 system.  
+3. *Accelerometer_\** columns indicate acceleration (±8 g) of the Unicorn Hybrid Black EEG device in X/Y/Z directions.  
+4. *Gyroscope_\** columns indicate the angular rotation (±1000 °/s) of Unicorn Hybrid Black EEG device in X/Y/Z directions.  
+5. *Battery_Level* column value ranges from 0 to 100 and indicates the remaining battery level.  
+6. *Counter* column tracks the sample order in which the values were received from Unicorn Hybrid Black to the host PC.  
+7. *Validation* column is a validation indicator for the samples received from the Unicorn Hybrid Black device.  
+8. *Event* column indicates if any event was registered during the recording. Event descriptions for different experiment types can be found below.  
+  
+More information about channels can be found in [Unicorn Hybrid Black User Manual](https://github.com/unicorn-bi/Unicorn-Suite-Hybrid-Black-User-Manual).  
+  
+**Note:** The data was streamed using the Unicorn LSL interface, which by itself outputs 17 raw channels (except "Time" and "Events" channels). Given channels were captured and exported into CSV files. Event markers were streamed (also using LSL protocol) by NeuroPype™ Experiment Recorder (ER) software. Both of these streams were exported in XDF file format and then automatically synced using the PyXDF library. As a result, the "Time" and "Events" columns were added to the CSV files.
+
+## Event Descriptions
+
+There are multiple event markers that accompany the data in the "Event" column. Each event represents a point in time where something notable has happened, for example when a stimulus was presented, or keyboard response was received. Event markers may also contain metadata such as the system status or any errors that happened during the recording. Key event markers for each experiment are as follows:
+
+AEP:
+ - *trial-begin*
+ - *oddball* or *target*
+ - *trial-end*
+
+AEP_Feedback:
+- *trial-begin*
+- *oddball* or *target*
+- *response-received-arrow_down* or r*esponse-received-arrow_up*
+- *response-was-correct* or *response-was-incorrect*
+- _rt-*ms_ (reaction time in milliseconds, e.g., rt-200ms)
+- *trial-end*
+
+Resting_Open:
+- *resting-state-eyes-open-begin*
+- *resting-state-eyes-open-end*
+
+Resting_Closed:
+- *resting-state-eyes-closed-begin*
+- *resting-state-eyes-closed-end*
+
+## Raw Data 
   
 Raw data contains unsegmented, unfiltered, and unprocessed data in CSV format. Each folder in "Raw_Data" that corresponds to one of the four experiment types will contain recordings from each subject.  
   
@@ -32,21 +76,21 @@ Recording files inside these folders are named as such: `{Subject ID}_{Experimen
   
 Subjects are numbered from 1 through 10 and possible experiment types are aep/aep-feedback/resting-open/resting-closed. Session IDs are either 1 or 2 for "aep/aep-feedback" experiments, while all resting state experiments have a single session.  
   
-Some recordings will have an additional '\_UNFINISHED' suffix at the end, which means that the recording was interrupted during during that session (for example, due to the EEG device battery getting too low). All '\_UNFINISHED' recordings were re-run from start to finish, which means there are at least two full sessions for 'aep/aep-feedback' experiments. However, epochs from unfinished recordings do not have any defects and can be freely used in the subsequent steps of processing.
+Some recordings will have an additional '\_UNFINISHED' suffix at the end, which means that the recording was interrupted during that session (for example, due to the EEG device battery getting too low). All '\_UNFINISHED' recordings were re-run from start to finish, which means there are at least two full sessions for 'aep/aep-feedback' experiments. However, epochs from unfinished recordings do not have any defects and can be freely used in the subsequent steps of processing.
 
-### Filtered Data  
+## Filtered Data  
   
 The filtered data has the same CSV file format as the raw data. Only EEG channels are modified, other columns remain the same.  
   
 Filtering of the EEG channels was done using the 0.5-60 Hz bandpass filter and 50 Hz notch filter. Both filters were designed with the MNE library as one-pass, zero-phase, non-causal filters using the windowed time-domain (firwin) method with a Hamming window.
 
-### Epoched Data  
+## Epoched Data  
   
 The raw data for each subject were segmented using the event markers, where all the data that was not involved in the trials (e.g. resting sections) were removed. For the "AEP" and "AEP_Feedback" experiments, segmented data epochs include the period from -0.2s before the stimulus. For the "Resting_Open" and "Resting_Closed" experiments, starting and ending points are cropped to the nearest event markers. The resulting epochs are stored in the "Epoched_Data" folder. No additional processing was done on the data except for the filtering process described above.  
   
 Each epoch is stored in a separate CSV file while the multiple sessions are merged. Additionally, a suffix is added to the file name to indicate the stimulus type, which is either "standard" or "oddball". The naming convention for the files is as follows: `{Subject ID}_{Experiment Type}_{Epoch ID}_{Stimulus Type}.csv`.
 
-### Selected Epochs  
+## Selected Epochs  
   
 The selected epochs are stored in the "Selected_Epochs" folder. The selected epochs are the epochs that were manually selected with the least noise. The selection process was done by visually inspecting the epochs and selecting the ones that were free of artifacts. The naming convention for the files is as follows: `{Subject ID}_{Experiment Type}_{Epoch ID}_{Stimulus Type}.csv`.  
   
@@ -54,4 +98,4 @@ The selected epochs in the "AEP" and "AEP_Feedback" experiments are baseline cor
 
 ## Limitations
 
-Data was recorded using the dry electrodes of the Unicorn Hybrid Black device. Although dry electrodes typically have a lower signal-to-noise ratio compared to wet electrodes, this choice was made for the sake of practicality of the method. Additionally, the number of electrodes, subjects, and trials may pose limitations depending on the specific focus of the research.
+Data was recorded using the dry electrodes of the Unicorn Hybrid Black device. Although dry electrodes typically have a lower signal-to-noise ratio compared to wet electrodes, this choice was made for the sake of the practicality of the method. Additionally, the number of electrodes, subjects, and trials may pose limitations depending on the specific focus of the research.
