@@ -31,7 +31,7 @@ Each CSV file recording has 19 columns. Each column corresponds to an output cha
 Specifically, all the 19 channels are: Time, EEG_Fz, EEG_C3, EEG_Cz, EEG_C4, EEG_Pz, EEG_PO7, EEG_Oz, EEG_PO8, Accelerometer_X, Accelerometer_Y, Accelerometer_Z, Gyroscope_X, Gyroscope_Y, Gyroscope_Z, Battery_Level, Counter, Validation, Event.  
   
 1. *Time* column indicates a number of seconds passed since the start of the session.  
-2. *EEG_\** columns indicate unfiltered voltage values (in microvolts) for 8 EEG channels specified in the Unicord Hybrid Black EEG device manual. For each EEG channel an electrode position is indicated (e.g. Cz) according to the international 10-20 system.  
+2. *EEG_\** columns indicate voltage values (in microvolts) for 8 EEG channels specified in the Unicord Hybrid Black EEG device manual. For each EEG channel an electrode position is indicated (e.g. Cz) according to the international 10-20 system.  
 3. *Accelerometer_\** columns indicate acceleration (±8 g) of the Unicorn Hybrid Black EEG device in X/Y/Z directions.  
 4. *Gyroscope_\** columns indicate the angular rotation (±1000 °/s) of Unicorn Hybrid Black EEG device in X/Y/Z directions.  
 5. *Battery_Level* column value ranges from 0 to 100 and indicates the remaining battery level.  
